@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Viet Nam</title>
+    <style></style>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="vietnamstyle.css" />
+  </head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <script src="https://rawgit.com/Anujarya300/bubble_maps/master/data/geography-data/datamaps.none.js"></script>
+    <h1>
+      Monthly average income per capita at current prices in Viet Nam in 2021 *
+    </h1>
+    <div class="container">
+      <div class="row">
+        <div id="vietnam" class="col-10"></div>
+        <div class="col-2">
+          <div class="legend2">
+            <strong> Monthly average income (thousand Vietnam Dong) </strong>
+          </div>
+          <div id="legend1"></div>
+        </div>
+      </div>
+    </div>
+    <p>
+      * Data taken from
+      <a
+        href="https://www.gso.gov.vn/en/px-web/?pxid=E1129&theme=Health%2C%20Culture%2C%20Sport%20and%20Living%20standard"
+        >Viet Nam General Statistic Office</a
+      >
+      <br />
+      <strong>Note</strong>
+      : The country map is scalable
+    </p>
+    <script>
+      var series = [
+        ["AG", 3338], //An Giang
+        ["BV", 4610], //Bà Rịa - Vũng Tàu
+        ["BG", 3930], //Bắc Giang
+        ["BK", 2192], //Bắc Kạn
+        ["BL", 3338], //Bạc Liêu
+        ["BN", 5439], //Bắc Ninh
+        ["BT", 3544], //Bến Tre
+        ["BD", 3441], //Bình Định
+        ["BI", 7034], //Bình Dương
+        ["BP", 4039], //Bình Phước
+        ["BT", 3981], //Bình Thuận
+        ["CM", 3034], //Cà Mau
+        ["CT", 5031], //Cần Thơ
+        ["CB", 2185], //Cao Bằng
+        ["DN", 5284], //Đà Nẵng
+        ["DL", 2715], //Đắk Lắk
+        ["DK", 2809], //Đắk Nông
+        ["DB", 1737], //Điện Biên
+        ["DA", 5621], //Đồng Nai
+        ["DT", 3965], //Đồng Tháp
+        ["GL", 2314], //Gia Lai
+        ["HG", 1835], //Hà Giang
+        ["HM", 4029], //Hà Nam
+        ["HN", 6205], //Hà Nội
+        ["HT", 3230], //Hà Tĩnh
+        ["HD", 4388], //Hải Dương
+        ["HP", 5199], //Hải Phòng
+        ["HU", 3974], //Hậu Giang
+        ["HB", 2707], //Hòa Bình
+        ["HC", 6537], //TP. Hồ Chí Minh
+        ["HY", 4043], //Hưng Yên
+        ["KH", 3153], //Khánh Hòa
+        ["KG", 4369], //Kiên Giang
+        ["KT", 2375], //Kon Tum
+        ["LC", 1905], //Lai Châu
+        ["LD", 3742], //Lâm Đồng
+        ["LS", 2297], //Lạng Sơn
+        ["LI", 2427], //Lào Cai
+        ["LA", 4232], //Long An
+        ["ND", 4096], //Nam Định
+        ["NA", 3004], //Nghệ An
+        ["NB", 3904], //Ninh Bình
+        ["NT", 3981], //Ninh Thuận
+        ["PT", 3331], //Phú Thọ
+        ["PY", 3224], //Phú Yên
+        ["QB", 3150], //Quảng Bình
+        ["QN", 3555], //Quảng Nam
+        ["QI", 3159], //Quảng Ngãi
+        ["QH", 4539], //Quảng Ninh
+        ["QT", 2853], //Quảng Trị
+        ["ST", 3635], //Sóc Trăng
+        ["SL", 1745], //Sơn La
+        ["TN", 4246], //Tây Ninh
+        ["TB", 4209], //Thái Bình
+        ["TY", 3806], //Thái Nguyên
+        ["TH", 3510], //Thanh Hóa
+        ["TT", 3212], //Thừa Thiên - Huế
+        ["TG", 4534], //Tiền Giang
+        ["TV", 3437], //Trà Vinh
+        ["TQ", 2681], //Tuyên Quang
+        ["VL", 3201], //Vĩnh Long
+        ["VP", 4290], //Vĩnh Phúc
+        ["YB", 2522], //Yên Bái
+      ];
+
+      var dataset = {};
+
+      var onlyValues = series.map(function (obj) {
+        return obj[1];
+      });
+
+      var minValue = Math.min.apply(null, onlyValues),
+        maxValue = Math.max.apply(null, onlyValues);
+
+      var colorScale = d3.scale
+        .linear()
+        .domain([minValue, maxValue])
+        .range(["#caf7d9", "#117733"]);
+      continuous("#legend1", colorScale);
+
+      series.forEach(function (item) {
+        var iso = item[0],
+          value = item[1];
+        dataset[iso] = { potential: value, fillColor: colorScale(value) };
+      });
+
+      function continuous(selector_id, colorscale) {
+        var legendHeight = 500,
+          legendWidth = 100,
+          margin = { top: 10, right: 60, bottom: 10, left: 10 };
+
+        var canvas = d3
+          .select(selector_id)
+          .style("height", legendHeight + "px")
+          .style("width", legendWidth + "px")
+          .style("position", "relative")
+          .append("canvas")
+          .attr("height", legendHeight - margin.top - margin.bottom)
+          .attr("width", 1)
+          .style("height", legendHeight - margin.top - margin.bottom + "px")
+          .style("width", legendWidth - margin.left - margin.right + "px")
+          .style("border", "1px solid #000")
+          .style("position", "absolute")
+          .style("top", margin.top + "px")
+          .style("left", margin.left + "px")
+          .node();
+
+        var ctx = canvas.getContext("2d");
+
+        var legendScale = d3.scale
+          .linear()
+          .range([1, legendHeight - margin.top - margin.bottom])
+          .domain(colorScale.domain());
+
+        var image = ctx.createImageData(1, legendHeight);
+        d3.range(legendHeight).forEach(function (i) {
+          var c = d3.rgb(colorScale(legendScale.invert(i)));
+          image.data[4 * i] = c.r;
+          image.data[4 * i + 1] = c.g;
+          image.data[4 * i + 2] = c.b;
+          image.data[4 * i + 3] = 255;
+        });
+        ctx.putImageData(image, 0, 0);
+
+        var legendAxis = d3.svg
+          .axis()
+          .scale(legendScale)
+          .orient("right")
+          .outerTickSize(0);
+
+        var svg = d3
+          .select(selector_id)
+          .append("svg")
+          .attr("height", legendHeight + "px")
+          .attr("width", legendWidth + "px")
+          .style("position", "absolute")
+          .style("left", "0px")
+          .style("top", "0px");
+
+        svg
+          .append("g")
+          .attr("class", "axis")
+          .attr(
+            "transform",
+            "translate(" +
+              (legendWidth - margin.left - margin.right + 3) +
+              "," +
+              margin.top +
+              ")"
+          )
+          .call(legendAxis);
+      }
+
+      function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+      var potential_map = new Datamap({
+        element: document.getElementById("vietnam"),
+        scope: "vietnam",
+        responsive: true,
+        data: dataset,
+        geographyConfig: {
+          popupOnHover: true,
+          highlightOnHover: true,
+          borderColor: "#444",
+          borderWidth: 0.5,
+          dataUrl:
+            "https://raw.githubusercontent.com/huyenng312/vietnammaps/main/vietnam.topo.json",
+          //dataJson: topoJsonData
+          popupTemplate: function (geography, data) {
+            return [
+              '<div class="hoverinfo">',
+              "<strong>",
+              geography.properties.name,
+              "</strong>",
+              "<br>Monthly income: <strong>",
+              numberWithCommas(data.potential),
+              "</strong>",
+              "</div>",
+            ].join("");
+          },
+        },
+
+        setProjection: function (element) {
+          var projection = d3.geo
+            .mercator()
+            .center([105.83416, 21.027764]) // always in [East Latitude, North Longitude]
+            .scale(2800); // scaling
+
+          var path = d3.geo.path().projection(projection);
+
+          return { path: path, projection: projection };
+        },
+
+        done: function (datamap) {
+          datamap.svg.call(d3.behavior.zoom().on("zoom", redraw));
+
+          var width = window.innerWidth,
+            height = window.innerHeight;
+
+          datamap.svg
+            .selectAll("g")
+            .attr("width", width)
+            .attr("height", height);
+
+          function redraw() {
+            datamap.svg
+              .selectAll("g")
+              .attr(
+                "transform",
+                "translate(" +
+                  d3.event.translate +
+                  ")scale(" +
+                  d3.event.scale +
+                  ")"
+              );
+          }
+        },
+      });
+
+      // var containerW = d3.select(".datamap").style("width");
+      // var containerH = d3.select(".datamap").style("height");
+
+      // var map = d3.select(".datamap").append("svg").attr("class", "map");
+      // map
+      //   .style("width", parseInt(containerW) + "px")
+      //   .style("height", parseInt(containerH) + "px");
+
+      /* // Resize map
+      window.addEventListener("resize", function () {
+        map.resize();
+      }); */
+    </script>
+  </body>
+</html>
